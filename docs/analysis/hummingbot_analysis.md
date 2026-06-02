@@ -61,7 +61,7 @@ venue-agnostic.
 - `parrot.py` / `connector_metrics_collector.py` — phone-home volume telemetry to Hummingbot servers; undesirable for a private platform.
 - RateOracle (#8) — FX-conversion oriented.
 
-## 4. Feasibility probe — **DEFERRED (commands specified; blocker recorded)**
+## 4. Feasibility probe — **CI-DEFINED: `probe.yml` job `hummingbot-probe` @ `91ff6bfa` (pending manual dispatch)**
 
 The V2 abstractions are covered by mock-driven unit tests needing no creds, but
 **blocker:** hummingbot requires a Cython compile/build of the package before its
@@ -76,7 +76,7 @@ Deferred. **Exact creds-free commands (post-build):**
 there is no `test/.../backtesting/` dir — `BacktestingDataProvider` fetches candles
 from exchanges. A probe must supply a CSV/parquet candle fixture into
 `prepare_market_data`; the simulator math (`position_executor_simulator.py`) is pure
-pandas and inspectable offline. Features #1–#7 marked **ELITE (probe deferred)**.
+pandas and inspectable offline. Features #1–#7 marked **ELITE (verification → `probe.yml` CI, pending run)**.
 
 ## 5. License-compatibility note (Apache-2.0)
 

@@ -70,7 +70,7 @@ docs/
 tests/                Pytest suite (smoke + config/data tests)
 infra/docker/         Container scaffold
 scripts/              boot_swarm.py entrypoint
-.github/workflows/    CI (ruff · mypy · pytest)
+.github/workflows/    ci.yml (ruff · mypy · pytest) + probe.yml (manual source-probe evidence)
 ```
 
 ## Quickstart

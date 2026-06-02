@@ -1,0 +1,225 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# QUANTFLO source-probe CI — RESEARCH EVIDENCE ONLY (manual dispatch).
+#
+# Purpose: run the smallest credentials-free probe of each ELITE feature in its
+# OWN upstream repository, on Linux, to validate the source before any later-phase
+# extraction (see docs/analysis/EXTRACTION_DECISIONS.md).
+#
+# This is NOT a build gate. It runs ONLY on manual workflow_dispatch — never on
+# push/PR — and never blocks the main `CI` workflow (ci.yml).
+#
+# COPYLEFT / LICENSE ISOLATION (important):
+#   freqtrade=GPL-3.0, lumibot=GPL-3.0, openalgo=AGPL-3.0, hummingbot=Apache-2.0.
+#   Each upstream repo is cloned at a PINNED commit into the runner's EPHEMERAL
+#   temp ($RUNNER_TEMP) and its OWN test-suite is run there. NONE of this source is
+#   copied, vendored, or merged into quantflo/. Probing a repo's own tests in an
+#   isolated CI runner does NOT create a derivative work and does NOT port code
+#   into QUANTFLO. The runner workspace is discarded when the job ends.
+# ──────────────────────────────────────────────────────────────────────────────
+name: Source Probe (research evidence)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Which upstream source to probe"
+        type: choice
+        default: all
+        options: [all, freqtrade, hummingbot, lumibot, openalgo]
+
+# Never grant write; this job only reads public upstreams and uploads logs.
+permissions:
+  contents: read
+
+jobs:
+  # ── freqtrade (GPL-3.0) — bias detectors, metrics, protections, hyperopt-loss ──
+  freqtrade-probe:
+    if: ${{ inputs.target == 'all' || inputs.target == 'freqtrade' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SRC_URL: https://github.com/freqtrade/freqtrade.git
+      SRC_SHA: 9eededcaefbb71914a96bb354c4839dafcc000b4
+    steps:
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Clone freqtrade @ pinned SHA (isolated temp)
+        run: |
+          set -e
+          git clone --quiet "$SRC_URL" "$RUNNER_TEMP/src"
+          git -C "$RUNNER_TEMP/src" checkout --quiet "$SRC_SHA"
+          echo "Pinned HEAD: $(git -C "$RUNNER_TEMP/src" rev-parse HEAD)"
+      - name: Probe — metrics + bias detectors + protections + hyperopt-loss (creds-free)
+        run: |
+          exec > >(tee "$RUNNER_TEMP/freqtrade-probe.log") 2>&1
+          set -e
+          cd "$RUNNER_TEMP/src"
+          sudo bash build_helpers/install_ta-lib.sh
+          python -m pip install -U pip wheel
+          pip install -r requirements.txt -r requirements-dev.txt
+          pip install -e . --no-deps
+          echo "===== RUNNING ELITE-FEATURE TESTS ====="
+          python -m pytest -q \
+            tests/data/test_metrics.py \
+            tests/optimize/test_lookahead_analysis.py \
+            tests/optimize/test_recursive_analysis.py \
+            tests/plugins/test_protections.py \
+            tests/optimize/test_hyperoptloss.py
+          echo "PROBE RESULT: PASS (freqtrade ELITE core)"
+      - name: Probe (extended, best-effort) — FreqAI continual-learning datakitchen
+        continue-on-error: true
+        run: |
+          exec > >(tee -a "$RUNNER_TEMP/freqtrade-probe.log") 2>&1
+          cd "$RUNNER_TEMP/src"
+          pip install -r requirements-freqai.txt || { echo "FreqAI deps install FAILED (blocker captured)"; exit 1; }
+          python -m pytest -q tests/freqai/test_freqai_datakitchen.py
+      - name: Job summary
+        if: always()
+        run: echo "### freqtrade probe (SHA ${SRC_SHA:0:10}) → see uploaded log + job status" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload evidence log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: freqtrade-probe-log
+          path: ${{ runner.temp }}/freqtrade-probe.log
+          if-no-files-found: warn
+
+  # ── hummingbot (Apache-2.0) — V2 controller/executor/orchestrator + triple-barrier ──
+  hummingbot-probe:
+    if: ${{ inputs.target == 'all' || inputs.target == 'hummingbot' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SRC_URL: https://github.com/hummingbot/hummingbot.git
+      SRC_SHA: 91ff6bfa3c4b0c97f0d4f34eb635ef6f5b772db0
+    steps:
+      - name: Clone hummingbot @ pinned SHA (isolated temp)
+        run: |
+          set -e
+          git clone --quiet "$SRC_URL" "$RUNNER_TEMP/src"
+          git -C "$RUNNER_TEMP/src" checkout --quiet "$SRC_SHA"
+          echo "Pinned HEAD: $(git -C "$RUNNER_TEMP/src" rev-parse HEAD)"
+      - name: Probe — Strategy V2 imports + executor/orchestrator unit tests (creds-free)
+        run: |
+          exec > >(tee "$RUNNER_TEMP/hummingbot-probe.log") 2>&1
+          set -e
+          cd "$RUNNER_TEMP/src"
+          source "$CONDA/etc/profile.d/conda.sh"
+          conda env create -f setup/environment.yml
+          conda activate hummingbot
+          pip install -e .
+          echo "===== IMPORT ELITE MODULES ====="
+          python -c "import hummingbot.strategy_v2.controllers.controller_base; import hummingbot.strategy_v2.executors.executor_orchestrator; import hummingbot.strategy_v2.executors.position_executor.position_executor; print('ELITE module imports OK')"
+          echo "===== RUNNING ELITE-FEATURE TESTS ====="
+          python -m pytest -q \
+            test/hummingbot/strategy_v2/executors/test_executor_orchestrator.py \
+            test/hummingbot/strategy_v2/executors/position_executor/test_position_executor.py \
+            test/hummingbot/core/rate_oracle/test_rate_oracle.py
+          echo "PROBE RESULT: PASS (hummingbot V2 execution)"
+      - name: Job summary
+        if: always()
+        run: echo "### hummingbot probe (SHA ${SRC_SHA:0:10}) → see uploaded log + job status" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload evidence log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hummingbot-probe-log
+          path: ${{ runner.temp }}/hummingbot-probe.log
+          if-no-files-found: warn
+
+  # ── lumibot (GPL-3.0) — continuous-futures roll engine (QUANTFLO's 6 symbols) ──
+  lumibot-probe:
+    if: ${{ inputs.target == 'all' || inputs.target == 'lumibot' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SRC_URL: https://github.com/Lumiwealth/lumibot.git
+      SRC_SHA: ed4886b17b27769f6f39beae415886b191ce77a5
+    steps:
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Clone lumibot @ pinned SHA (isolated temp)
+        run: |
+          set -e
+          git clone --quiet "$SRC_URL" "$RUNNER_TEMP/src"
+          git -C "$RUNNER_TEMP/src" checkout --quiet "$SRC_SHA"
+          echo "Pinned HEAD: $(git -C "$RUNNER_TEMP/src" rev-parse HEAD)"
+      - name: Probe — continuous-futures roll + resolution tests (creds-free)
+        run: |
+          exec > >(tee "$RUNNER_TEMP/lumibot-probe.log") 2>&1
+          set -e
+          cd "$RUNNER_TEMP/src"
+          python -m pip install -U pip wheel
+          pip install -e .
+          pip install pytest
+          echo "===== RUNNING ELITE-FEATURE TESTS (futures roll engine) ====="
+          python -m pytest -q tests/test_futures_roll.py tests/test_continuous_futures_resolution.py
+          echo "PROBE RESULT: PASS (lumibot roll engine)"
+      - name: Probe (extended, best-effort) — CME margin lookup for MES
+        continue-on-error: true
+        run: |
+          exec > >(tee -a "$RUNNER_TEMP/lumibot-probe.log") 2>&1
+          cd "$RUNNER_TEMP/src"
+          python -c "from lumibot.entities import Asset; from lumibot.backtesting.backtesting_broker import get_futures_margin_requirement as g; print('MES margin =', g(Asset('MES', asset_type=Asset.AssetType.FUTURE)))"
+      - name: Job summary
+        if: always()
+        run: echo "### lumibot probe (SHA ${SRC_SHA:0:10}) → see uploaded log + job status" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload evidence log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lumibot-probe-log
+          path: ${{ runner.temp }}/lumibot-probe.log
+          if-no-files-found: warn
+
+  # ── openalgo (AGPL-3.0) — SmartOrder delta + sandbox paper-trade + app load ──
+  openalgo-probe:
+    if: ${{ inputs.target == 'all' || inputs.target == 'openalgo' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SRC_URL: https://github.com/marketcalls/openalgo.git
+      SRC_SHA: b9154f66e319024958fb1741c1b11c3970f6991a
+    steps:
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Clone openalgo @ pinned SHA (isolated temp)
+        run: |
+          set -e
+          git clone --quiet "$SRC_URL" "$RUNNER_TEMP/src"
+          git -C "$RUNNER_TEMP/src" checkout --quiet "$SRC_SHA"
+          echo "Pinned HEAD: $(git -C "$RUNNER_TEMP/src" rev-parse HEAD)"
+      - name: Probe — SmartOrder delta truth-table + sandbox engine (creds-free)
+        run: |
+          exec > >(tee "$RUNNER_TEMP/openalgo-probe.log") 2>&1
+          set -e
+          cd "$RUNNER_TEMP/src"
+          python -m pip install -U pip uv
+          uv sync
+          uv pip install pytest
+          echo "===== RUNNING ELITE-FEATURE TESTS (SmartOrder + sandbox) ====="
+          uv run pytest -q test/test_smartorder_logic.py test/sandbox/
+          echo "PROBE RESULT: PASS (openalgo SmartOrder + sandbox)"
+      - name: Probe (extended, best-effort) — command-center/web layer loads (no live creds)
+        continue-on-error: true
+        run: |
+          exec > >(tee -a "$RUNNER_TEMP/openalgo-probe.log") 2>&1
+          cd "$RUNNER_TEMP/src"
+          cp .sample.env .env || true
+          uv run python -c "import app; print('openalgo command-center app module imports OK')"
+      - name: Job summary
+        if: always()
+        run: echo "### openalgo probe (SHA ${SRC_SHA:0:10}) → see uploaded log + job status" >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload evidence log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openalgo-probe-log
+          path: ${{ runner.temp }}/openalgo-probe.log
+          if-no-files-found: warn

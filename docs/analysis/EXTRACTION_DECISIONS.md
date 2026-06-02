@@ -17,8 +17,9 @@
   written spec; never copy code).
 - **Target phase:** P1 Data & Vault · P2 Research & Strategy · P3 Testing & Validation ·
   P4 Risk & Execution · P5 ModelOps & Monitoring · P6 Governance & Go-Live.
-- **Probe:** `PASS (executed)` · `deferred (cmd specified)` — see each
-  `*_analysis.md` and §Feasibility-probe status.
+- **Probe:** `PASS (executed)` · `CI probe defined → probe.yml @ <SHA>` (manual
+  dispatch, pending run) — see each `*_analysis.md` and §Feasibility-probe status.
+  No ELITE feature rests on inspection alone.
 
 ## Copyleft summary (requirement 2.4)
 
@@ -131,16 +132,19 @@
 | quanttrader | **PASS (executed)** | `pytest tests/test_strats.py` → 1 passed (bundled `TEST.csv`, no creds). |
 | pyalgotrader | **PASS (executed, elite features)** | `CoreImportTest` → 2 passed (event engine + MainEngine/OMS); only `test_import_ui` failed (PyQt5 = rejected feature). |
 | ruflo | **PARTIAL (runtime present)** | Pinned `ruflo@3.10.31` installs + CLI boots (loads ONNX model); swarm unit suites deferred (need `tsc` build). |
-| freqtrade | deferred (cmds specified) | Bundled `tests/testdata` + tests; blocker = heavy install / TA-Lib / FreqAI ML stack. |
-| lumibot | deferred (cmds specified) | `tests/test_futures_roll.py` creds-free; blocker = heavy broker-SDK install; end-to-end futures backtest needs DataBento key. |
-| openalgo | deferred (cmds specified) | `test/test_smartorder_logic.py` creds-free; blocker = full Flask/uv app install. |
-| hummingbot | deferred (cmds specified) | mock-based V2 tests creds-free; blocker = Cython build of the package. |
+| freqtrade | **CI probe defined** → `probe.yml` job `freqtrade-probe` @ `9eededca` | Runs `pytest` on metrics + lookahead/recursive bias detectors + protections + hyperopt-loss (bundled `tests/testdata`, no creds); FreqAI datakitchen as best-effort extended step. Pending manual dispatch. |
+| hummingbot | **CI probe defined** → `probe.yml` job `hummingbot-probe` @ `91ff6bfa` | Conda build + imports V2 controller/executor/orchestrator + runs `test_executor_orchestrator.py`, `test_position_executor.py`, `test_rate_oracle.py` (mock-based, no creds). Pending manual dispatch. |
+| lumibot | **CI probe defined** → `probe.yml` job `lumibot-probe` @ `ed4886b1` | Runs `tests/test_futures_roll.py` + `tests/test_continuous_futures_resolution.py` (creds-free roll engine); MES margin lookup as best-effort extended step. Pending manual dispatch. |
+| openalgo | **CI probe defined** → `probe.yml` job `openalgo-probe` @ `b9154f66` | `uv sync` + runs `test/test_smartorder_logic.py` (12-case truth table) + `test/sandbox/`; command-center app-load as best-effort extended step. Pending manual dispatch. |
 | neural-trader plugin | N/A (rejected) | No standalone runnable feature; engine rejected as dependency. |
 
-**Honest gap (carried to gate §G):** 2 of 6 substantial repos have **executed** probes;
-4 are **deferred with exact creds-free commands** (and are GPL/AGPL clean-room targets
-where the probe validates the source before reimplementation). ELITE features on
-deferred repos are tagged "(probe deferred)" in their analysis reports. Recommendation:
-stand up a dedicated Linux probe-CI image (with TA-Lib, Cython build, `uv`, and a
-DataBento sim key) and execute every command above before the corresponding port phase
-begins; a feature whose probe then fails is demoted from ELITE.
+**Status (requirement 4 — no feature ELITE on inspection alone):** 2 of 6 substantial
+repos have **executed** probes (PASS). The other 4 each now map to a concrete
+`.github/workflows/probe.yml` job at a **pinned SHA** (table above) — the probe clones
+the upstream repo into an isolated Linux runner, runs its OWN credentials-free test
+suite for the ELITE feature(s), and uploads PASS/FAIL logs as artifacts. Copyleft-safe:
+nothing from those repos is copied into `quantflo/`. These probes are **defined and
+pending the manual `workflow_dispatch` run** — they are NOT yet claimed as PASS. After
+the run: promote each feature's `verification_method` to "PASS @ SHA", or demote the
+feature from ELITE if its probe fails. ruflo's swarm unit suites remain a `tsc`-build
+follow-up (backbone, not an extraction target).

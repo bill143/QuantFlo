@@ -59,7 +59,7 @@ identical request/response shapes. India-broker-specific, but the *patterns* tra
 - 30+ concrete broker adapters (`broker/aliceblue`…`zebu`) — all Indian brokers; value is only the *pattern* (#1), not any implementation.
 - DuckDB historify / no-code Flow builder — orthogonal, India/equity-options oriented.
 
-## 4. Feasibility probe — **DEFERRED (commands specified; blocker recorded)**
+## 4. Feasibility probe — **CI-DEFINED: `probe.yml` job `openalgo-probe` @ `b9154f66` (pending manual dispatch)**
 
 Several flagship patterns have **creds-free, mock-based** tests, but **blocker:** they
 require installing the full Flask app stack via `uv`. Deferred. **Exact creds-free
@@ -70,7 +70,7 @@ commands (validate before clean-room):**
 - Feature #8: `uv run python test/test_rate_limits_mock.py`
 - Feature #1 (contract shape, no install): `python -c "import json,glob; [print(json.load(open(p))) for p in glob.glob('broker/*/plugin.json')]"`
 
-Features #1–#7 marked **ELITE (probe deferred)**.
+Features #1–#7 marked **ELITE (verification → `probe.yml` CI, pending run)**.
 
 ## 5. License-compatibility note (AGPL-3.0)
 

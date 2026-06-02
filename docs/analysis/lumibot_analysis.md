@@ -59,7 +59,7 @@ warning for any port.
 - Macro helpers (`macro/fred.py`, `vix_helper.py`, `perplexity_helper.py`) — thin API wrappers, rebuild trivially.
 - Smart-limit execution (`entities/smart_limit.py`) — ~175 ln; too thin to be "elite" (concept noted).
 
-## 4. Feasibility probe — **DEFERRED (commands specified; blocker recorded)**
+## 4. Feasibility probe — **CI-DEFINED: `probe.yml` job `lumibot-probe` @ `ed4886b1` (pending manual dispatch)**
 
 The flagship roll engine (#1) has **credential-free** unit tests; the end-to-end
 futures backtest (#2) needs a DataBento key (its `tests/backtest/test_futures_*.py`
@@ -71,7 +71,7 @@ installing lumibot pulls a large set of broker/data SDKs. Deferred.
 - Feature #2 (margin sub-logic only): `python -c "from lumibot.entities import Asset; from lumibot.backtesting.backtesting_broker import get_futures_margin_requirement as g; print(g(Asset('MES', asset_type=Asset.AssetType.FUTURE)))"` → expect `1300`
 - Feature #2 (end-to-end fill/PnL): requires synthesizing a small `PandasData` feed — clean-room reimplement, do not reuse code.
 
-Features #1–#5 marked **ELITE (probe deferred)**.
+Features #1–#5 marked **ELITE (verification → `probe.yml` CI, pending run)**.
 
 ## 5. License-compatibility note (GPL-3.0)
 

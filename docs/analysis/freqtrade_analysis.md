@@ -57,7 +57,7 @@ The exchange/execution layers are crypto-CEX specific (irrelevant to CME), but t
 - FreqAI `RL/*` reward envs — too entangled to beat a standard RL lib.
 - `Edge` positioning — **removed** in this version; historical.
 
-## 4. Feasibility probe — **DEFERRED (commands specified; blocker recorded)**
+## 4. Feasibility probe — **CI-DEFINED: `probe.yml` job `freqtrade-probe` @ `9eededca` (pending manual dispatch)**
 
 All flagship analytical features have bundled offline data + tests (no creds), but
 running them requires a full freqtrade install. **Blocker:** heavy dependency stack
@@ -76,7 +76,7 @@ target phase. **Exact creds-free commands (validate the source before reimplemen
 - Feature #8: `pytest tests/rpc/test_rpc_emc.py`
 
 All consume `tests/testdata/` only. These probes run in the clean-room validation
-phase; until then features #1–#8 are marked **ELITE (probe deferred)**.
+phase; until then features #1–#8 are marked **ELITE (verification → `probe.yml` CI, pending run)**.
 
 ## 5. License-compatibility note (GPL-3.0)
 

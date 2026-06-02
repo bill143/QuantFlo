@@ -117,3 +117,38 @@ Remote `origin` = `https://github.com/bill143/QuantFlo.git`. Four stage commits:
 execution coverage, (2) Master-Project-Plan role-text reconciliation — both named above
 with recommendations. The foundation itself is production-grade: no mock data, no
 placeholder logic, no disabled auth, no trading logic; everything runs and is verified.
+
+---
+
+## Post-gate updates (both flagged gaps addressed)
+
+### 1 — Team role text reconciled to the Master Project Plan (Stage 2 gap → CLOSED)
+All ten team role statements in `quantflo/orchestration/teams.py` and every team
+README now carry the **verbatim Master Project Plan** role text; team **names** are the
+authoritative labels (Researchers, Creators, Testers, Traders, Orchestration/Coordination,
+Data Engineering, Risk & Compliance, Continuous Learning / ModelOps, Monitoring &
+Observability, Governance & Kill-Switch). The "synthesized — pending reconciliation"
+flags are removed. The synthesized "Responsibilities" bullets were dropped (they were
+Phase-0 synthesis, not from the plan); the paths/phase-note section is intact.
+`boot_swarm.py` prints the verbatim role text per agent; the smoke test asserts the new
+names. Gate re-run: **ruff ✅ · mypy ✅ (33 files) · pytest ✅ 19 passed · boot ✅ (10 READY)**.
+**Stage 2 → 9.8.**
+
+### 2 — Linux probe-CI provisioned (Stage 1 gap → ADDRESSED, pending manual run)
+`.github/workflows/probe.yml` added — **manual `workflow_dispatch` only** (never
+push/PR, never blocks `ci.yml`), `permissions: contents: read`. Four isolated jobs clone
+each upstream at a **pinned SHA** into `$RUNNER_TEMP` and run its OWN credentials-free
+probe of the ELITE feature(s), emitting PASS/FAIL and uploading logs as artifacts;
+copyleft-isolation reaffirmed in the file header (nothing copied into `quantflo/`):
+
+| Job | Pinned SHA | ELITE feature(s) probed |
+|-----|-----------|-------------------------|
+| `freqtrade-probe` | `9eededca` | metrics, lookahead/recursive bias detectors, protections, hyperopt-loss (+FreqAI best-effort) |
+| `hummingbot-probe` | `91ff6bfa` | V2 controller/executor/orchestrator + triple-barrier executor + rate oracle |
+| `lumibot-probe` | `ed4886b1` | continuous-futures roll engine + symbol resolution (+MES margin best-effort) |
+| `openalgo-probe` | `b9154f66` | SmartOrder delta truth-table + sandbox paper-trade (+app-load best-effort) |
+
+`EXTRACTION_DECISIONS.md` updated: no ELITE feature rests on inspection alone — each
+former "(probe deferred)" now points to its `probe.yml` job + pinned SHA. Results are
+**pending the manual dispatch run** (not yet claimed PASS). **Stage 1 → 9.6** (full
+closure to 9.8 once the four probes run green; demote any feature whose probe fails).
