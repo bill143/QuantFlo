@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "quantflo"
+version = "0.0.0"
+description = "QUANTFLO — autonomous CME index-futures trading platform (Phase 0 foundation)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [{ name = "QUANTFLO" }]
+keywords = ["trading", "futures", "cme", "orchestration", "ruflo"]
+
+# Pinned dependencies for ruflo integration / config surface ONLY.
+# No trading, data, or broker libraries are added in Phase 0 — by design.
+dependencies = [
+    "pydantic>=2.10,<3.0",
+    "pydantic-settings>=2.6,<3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8,<1.0",
+    "mypy>=1.13,<2.0",
+    "pytest>=8.3,<9.0",
+    "pytest-cov>=6.0,<7.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["quantflo"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+files = ["quantflo", "scripts", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
