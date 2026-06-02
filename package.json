@@ -1,0 +1,13 @@
+{
+  "name": "quantflo-orchestration",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Vendored ruflo orchestration backbone for QUANTFLO (pinned). See docs/decisions/0001-ruflo-integration.md.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ruflo": "3.10.31"
+  }
+}
