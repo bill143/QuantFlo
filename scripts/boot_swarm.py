@@ -48,10 +48,8 @@ def main() -> int:
     print("QUANTFLO swarm boot - Phase 0 foundation")
     print(LINE)
     for agent in agents:
-        print(
-            f"  Team {agent.team_no:>2}  {agent.key:<16}  "
-            f"[{agent.status.value:<5}]  {agent.role}"
-        )
+        print(f"  Team {agent.team_no:>2}  {agent.name}  [{agent.status.value}]  ({agent.key})")
+        print(f"          role: {agent.role}")
     print("-" * 78)
     print(f"Registered agents : {len(agents)}")
     print(f"Backbone          : {probe_ruflo()}")

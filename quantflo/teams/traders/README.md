@@ -1,27 +1,17 @@
-# Team 4 â€” Trading Team
+# Team 4 — Traders
 
-**Key:** `traders`  Â·  **Swarm agent:** `traders`
+**Key:** `traders`  ·  **Swarm agent:** `traders`
 
 ## Role
 
-Route validated strategies to execution and manage the order lifecycle.
+Autonomous execution within hard risk limits and human-authorized live gating.
 
-## Responsibilities
-
-- Route orders and manage fills, positions, and the order lifecycle.
-- Operate broker drivers (added in a later phase).
-- Trade strictly within Risk & Compliance (Team 7) limits.
-- Report execution quality to Monitoring (Team 9).
+> Verbatim Master Project Plan role text. Team key, number, and name are stable
+> and asserted by the boot smoke test (`tests/test_boot_swarm.py`).
 
 ## Phase 0 status
 
 Scaffold only. This team is **registrable as a swarm agent** (see
 `quantflo/orchestration/teams.py` and `scripts/boot_swarm.py`) but has **no
-internal logic yet** â€” that is correct for Phase 0. Implementation lands in later
+internal logic yet** — that is correct for Phase 0. Implementation lands in later
 phases.
-
-> **Role-text provenance:** the role statement above is synthesized from the
-> QUANTFLO team taxonomy and is **pending reconciliation with the verbatim
-> Master Project Plan** role text (tracked as a known gap in the Phase 0 gate
-> report). Keys, numbers, and names are stable and are asserted by the boot
-> smoke test.

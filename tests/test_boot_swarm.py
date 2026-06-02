@@ -21,17 +21,18 @@ EXPECTED_TEAM_KEYS = {
     "governance",
 }
 
+# Verbatim Master Project Plan team names (authoritative).
 EXPECTED_TEAM_NAMES = {
-    "researchers": "Research Team",
-    "creators": "Strategy Creation Team",
-    "testers": "Testing & Validation Team",
-    "traders": "Trading Team",
-    "orchestration": "Orchestration Team",
-    "data_engineering": "Data Engineering Team",
-    "risk_compliance": "Risk & Compliance Team",
-    "modelops": "ModelOps Team",
-    "monitoring": "Monitoring Team",
-    "governance": "Governance Team",
+    "researchers": "Researchers",
+    "creators": "Creators",
+    "testers": "Testers",
+    "traders": "Traders",
+    "orchestration": "Orchestration/Coordination",
+    "data_engineering": "Data Engineering",
+    "risk_compliance": "Risk & Compliance",
+    "modelops": "Continuous Learning / ModelOps",
+    "monitoring": "Monitoring & Observability",
+    "governance": "Governance & Kill-Switch",
 }
 
 

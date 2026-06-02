@@ -1,27 +1,17 @@
-# Team 3 â€” Testing & Validation Team
+# Team 3 — Testers
 
-**Key:** `testers`  Â·  **Swarm agent:** `testers`
+**Key:** `testers`  ·  **Swarm agent:** `testers`
 
 ## Role
 
-Backtest, walk-forward, and statistically validate candidate strategies.
+Extended backtest + walk-forward + Monte Carlo + forward paper-test. Recalibrate parameters until aligned with current regime. Hand validated strategies to Traders.
 
-## Responsibilities
-
-- Run out-of-sample and walk-forward backtests on real data.
-- Apply statistical-significance and overfitting checks.
-- Produce performance attribution and risk diagnostics.
-- Gatekeeper: only validated strategies may be promoted to Trading.
+> Verbatim Master Project Plan role text. Team key, number, and name are stable
+> and asserted by the boot smoke test (`tests/test_boot_swarm.py`).
 
 ## Phase 0 status
 
 Scaffold only. This team is **registrable as a swarm agent** (see
 `quantflo/orchestration/teams.py` and `scripts/boot_swarm.py`) but has **no
-internal logic yet** â€” that is correct for Phase 0. Implementation lands in later
+internal logic yet** — that is correct for Phase 0. Implementation lands in later
 phases.
-
-> **Role-text provenance:** the role statement above is synthesized from the
-> QUANTFLO team taxonomy and is **pending reconciliation with the verbatim
-> Master Project Plan** role text (tracked as a known gap in the Phase 0 gate
-> report). Keys, numbers, and names are stable and are asserted by the boot
-> smoke test.
