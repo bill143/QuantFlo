@@ -43,7 +43,7 @@ jobs:
       SRC_SHA: 9eededcaefbb71914a96bb354c4839dafcc000b4
     steps:
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Clone freqtrade @ pinned SHA (isolated temp)
@@ -57,8 +57,10 @@ jobs:
           exec > >(tee "$RUNNER_TEMP/freqtrade-probe.log") 2>&1
           set -e
           cd "$RUNNER_TEMP/src"
-          sudo bash build_helpers/install_ta-lib.sh
           python -m pip install -U pip wheel
+          # TA-Lib (ta-lib==0.6.8) ships a manylinux x86_64 wheel that bundles the C
+          # library and is pinned in requirements.txt below — no system build script
+          # is needed (the old build_helpers/install_ta-lib.sh no longer exists -> exit 127).
           pip install -r requirements.txt -r requirements-dev.txt
           pip install -e . --no-deps
           echo "===== RUNNING ELITE-FEATURE TESTS ====="
@@ -81,7 +83,7 @@ jobs:
         run: echo "### freqtrade probe (SHA ${SRC_SHA:0:10}) → see uploaded log + job status" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload evidence log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: freqtrade-probe-log
           path: ${{ runner.temp }}/freqtrade-probe.log
@@ -108,9 +110,14 @@ jobs:
           set -e
           cd "$RUNNER_TEMP/src"
           source "$CONDA/etc/profile.d/conda.sh"
-          conda env create -f setup/environment.yml
+          # Build the conda env WITHOUT the trailing `pip:` DeFi block. injective-py ->
+          # bip32 -> coincurve has malformed metadata that modern pip rejects, and those
+          # crypto connectors are irrelevant to CME futures. The V2 execution path needs
+          # only the conda deps; then install hummingbot itself without re-resolving deps.
+          sed '/- pip:/,$d' setup/environment.yml > "$RUNNER_TEMP/env-min.yml"
+          conda env create -f "$RUNNER_TEMP/env-min.yml"
           conda activate hummingbot
-          pip install -e .
+          pip install -e . --no-deps
           echo "===== IMPORT ELITE MODULES ====="
           python -c "import hummingbot.strategy_v2.controllers.controller_base; import hummingbot.strategy_v2.executors.executor_orchestrator; import hummingbot.strategy_v2.executors.position_executor.position_executor; print('ELITE module imports OK')"
           echo "===== RUNNING ELITE-FEATURE TESTS ====="
@@ -124,7 +131,7 @@ jobs:
         run: echo "### hummingbot probe (SHA ${SRC_SHA:0:10}) → see uploaded log + job status" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload evidence log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: hummingbot-probe-log
           path: ${{ runner.temp }}/hummingbot-probe.log
@@ -140,7 +147,7 @@ jobs:
       SRC_SHA: ed4886b17b27769f6f39beae415886b191ce77a5
     steps:
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Clone lumibot @ pinned SHA (isolated temp)
@@ -171,7 +178,7 @@ jobs:
         run: echo "### lumibot probe (SHA ${SRC_SHA:0:10}) → see uploaded log + job status" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload evidence log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lumibot-probe-log
           path: ${{ runner.temp }}/lumibot-probe.log
@@ -187,7 +194,7 @@ jobs:
       SRC_SHA: b9154f66e319024958fb1741c1b11c3970f6991a
     steps:
       - name: Set up Python 3.12
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Clone openalgo @ pinned SHA (isolated temp)
@@ -203,9 +210,12 @@ jobs:
           cd "$RUNNER_TEMP/src"
           python -m pip install -U pip uv
           uv sync
-          uv pip install pytest
+          # The tests import top-level packages (database/, sandbox/) that live at the
+          # repo root. openalgo's pyproject sets no pytest `pythonpath` and packages=[],
+          # so run via `python -m pytest` (adds cwd to sys.path) with PYTHONPATH=repo root.
+          cp .sample.env .env || true
           echo "===== RUNNING ELITE-FEATURE TESTS (SmartOrder + sandbox) ====="
-          uv run pytest -q test/test_smartorder_logic.py test/sandbox/
+          PYTHONPATH="$RUNNER_TEMP/src" uv run python -m pytest -q test/test_smartorder_logic.py test/sandbox/
           echo "PROBE RESULT: PASS (openalgo SmartOrder + sandbox)"
       - name: Probe (extended, best-effort) — command-center/web layer loads (no live creds)
         continue-on-error: true
@@ -219,7 +229,7 @@ jobs:
         run: echo "### openalgo probe (SHA ${SRC_SHA:0:10}) → see uploaded log + job status" >> "$GITHUB_STEP_SUMMARY"
       - name: Upload evidence log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: openalgo-probe-log
           path: ${{ runner.temp }}/openalgo-probe.log
