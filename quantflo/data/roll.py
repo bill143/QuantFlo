@@ -60,15 +60,28 @@ def contract_symbol(root: str, year: int, month: int) -> str:
     return f"{root}{MONTH_CODES[month]}{year % 100:02d}"
 
 
-def active_contract(d: date, root: str, offset_bdays: int = DEFAULT_ROLL_OFFSET_BDAYS) -> str:
-    """The front contract held on ``d`` (rolls ``offset_bdays`` trading days before expiry)."""
+def active_contract_parts(
+    d: date, root: str, offset_bdays: int = DEFAULT_ROLL_OFFSET_BDAYS
+) -> tuple[str, int, int]:
+    """Return ``(root, year, month)`` of the active front contract on ``d``."""
     year = d.year
     for _ in range(4):
         for month in QUARTERLY_MONTHS:
             if d < roll_date(year, month, offset_bdays):
-                return contract_symbol(root, year, month)
+                return root, year, month
         year += 1
     raise RuntimeError(f"could not resolve active contract for {d}")
+
+
+def active_contract(d: date, root: str, offset_bdays: int = DEFAULT_ROLL_OFFSET_BDAYS) -> str:
+    """The front contract held on ``d`` (rolls ``offset_bdays`` trading days before expiry)."""
+    root_, year, month = active_contract_parts(d, root, offset_bdays)
+    return contract_symbol(root_, year, month)
+
+
+def databento_raw_symbol(root: str, year: int, month: int) -> str:
+    """Databento/CME raw symbol (single-digit year), e.g. ``('ES', 2024, 3) -> 'ESH4'``."""
+    return f"{root}{MONTH_CODES[month]}{year % 10}"
 
 
 def roll_schedule(
