@@ -6,6 +6,7 @@ inter-team state bus contract lives in :mod:`quantflo.core.state_bus`.
 from __future__ import annotations
 
 from quantflo.orchestration.agent import AgentStatus, TeamAgent
+from quantflo.orchestration.pipeline import PipelineStats, ResearchPipeline
 from quantflo.orchestration.swarm import (
     DuplicateTeamError,
     SwarmConductor,
@@ -18,6 +19,8 @@ __all__ = [
     "TEAMS",
     "AgentStatus",
     "DuplicateTeamError",
+    "PipelineStats",
+    "ResearchPipeline",
     "SwarmConductor",
     "Task",
     "TaskQueue",
