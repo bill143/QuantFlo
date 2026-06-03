@@ -12,6 +12,8 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+# Import side effect: register the strategy-registry tables on Base.metadata.
+import quantflo.strategies.models  # noqa: E402,F401  (after Base; registration import)
 from alembic import context
 from quantflo.core.config import get_settings
 from quantflo.data.models import Base
