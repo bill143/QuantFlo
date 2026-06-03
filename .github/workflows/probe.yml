@@ -17,6 +17,7 @@
 #   into QUANTFLO. The runner workspace is discarded when the job ends.
 # ──────────────────────────────────────────────────────────────────────────────
 name: Source Probe (research evidence)
+run-name: Source Probe (${{ inputs.target }})
 
 on:
   workflow_dispatch:
