@@ -1,4 +1,4 @@
-"""Backtest + evaluation toolkit (metrics, bias detectors; engine added in Phase 2)."""
+"""Backtest + evaluation toolkit (engine, metrics, bias detectors)."""
 from __future__ import annotations
 
 from quantflo.backtest.bias import (
@@ -6,6 +6,7 @@ from quantflo.backtest.bias import (
     detect_lookahead_bias,
     detect_recursive_bias,
 )
+from quantflo.backtest.engine import BacktestConfig, Backtester, BacktestResult
 from quantflo.backtest.metrics import (
     PerformanceMetrics,
     compute_metrics,
@@ -17,6 +18,9 @@ from quantflo.backtest.metrics import (
 )
 
 __all__ = [
+    "BacktestConfig",
+    "BacktestResult",
+    "Backtester",
     "BiasResult",
     "PerformanceMetrics",
     "compute_metrics",
