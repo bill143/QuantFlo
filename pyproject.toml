@@ -72,6 +72,13 @@ module = [
 ]
 ignore_missing_imports = true
 
+# pandas ships partial stubs; treat it as untyped so the data layer stays strict-clean
+# elsewhere without fighting incomplete pandas typing.
+[[tool.mypy.overrides]]
+module = ["pandas", "pandas.*"]
+follow_imports = "skip"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
