@@ -1,6 +1,7 @@
 """Tester integration test: validate a version against REAL ES bars; persist metrics + verdict."""
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import delete, select
 
 from quantflo.data.db import session_scope
@@ -37,7 +38,13 @@ async def test_tester_validates_real_bars_and_persists(pools: None) -> None:
         await session.flush()
         version_id = version.id
 
-    report = await StrategyTester(tenant="local").validate_version(version_id, "ES", "1h")
+    try:
+        report = await StrategyTester(tenant="local").validate_version(version_id, "ES", "1h")
+    except ValueError as exc:
+        if "insufficient bars" in str(exc):
+            await _purge(version_id)
+            pytest.skip("no real bars in DB (run scripts/ingest_data.py) - local integration test")
+        raise
     assert report.out_of_sample.trade_count >= 0  # real numbers, any sign
 
     async with session_scope() as session:
