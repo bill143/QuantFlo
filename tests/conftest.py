@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import socket
 from collections.abc import AsyncIterator
+from urllib.parse import urlparse
 
 import pytest
 import pytest_asyncio
@@ -29,9 +30,26 @@ def _db_reachable() -> bool:
         return False
 
 
+def _redis_reachable() -> bool:
+    settings = get_settings()
+    if not settings.redis_url:
+        return False
+    try:
+        url = urlparse(settings.redis_url)
+        with socket.create_connection((url.hostname or "localhost", url.port or 6379), timeout=2):
+            return True
+    except Exception:
+        return False
+
+
 requires_db = pytest.mark.skipif(
     not _db_reachable(),
     reason="Postgres not reachable — run: docker compose -f infra/docker/docker-compose.yml up -d",
+)
+
+requires_redis = pytest.mark.skipif(
+    not _redis_reachable(),
+    reason="Redis not reachable — run: docker compose -f infra/docker/docker-compose.yml up -d",
 )
 
 

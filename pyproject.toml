@@ -79,6 +79,13 @@ module = ["pandas", "pandas.*"]
 follow_imports = "skip"
 ignore_missing_imports = true
 
+# redis-py's sync client returns the awkward ResponseT (Awaitable|Any) union; treat
+# the client as untyped at the boundary. Our bus method signatures stay fully typed.
+[[tool.mypy.overrides]]
+module = ["redis", "redis.*"]
+follow_imports = "skip"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
