@@ -48,6 +48,7 @@ yarn-error.log*
 *.p12
 *.pfx
 secrets/
+.secrets/
 *.secret
 
 # ── Data dumps ──

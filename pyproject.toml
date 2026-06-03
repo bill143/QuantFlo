@@ -4,19 +4,31 @@ build-backend = "hatchling.build"
 
 [project]
 name = "quantflo"
-version = "0.0.0"
-description = "QUANTFLO — autonomous CME index-futures trading platform (Phase 0 foundation)."
+version = "0.1.0"
+description = "QUANTFLO — autonomous CME index-futures trading platform (Phase 1: data + vault)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
 authors = [{ name = "QUANTFLO" }]
-keywords = ["trading", "futures", "cme", "orchestration", "ruflo"]
+keywords = ["trading", "futures", "cme", "orchestration", "ruflo", "databento"]
 
-# Pinned dependencies for ruflo integration / config surface ONLY.
-# No trading, data, or broker libraries are added in Phase 0 — by design.
+# All deps pinned to known-good ranges; exact versions locked in uv.lock (committed).
 dependencies = [
     "pydantic>=2.10,<3.0",
     "pydantic-settings>=2.6,<3.0",
+    # ── datastore ──
+    "sqlalchemy[asyncio]>=2.0.36,<2.1",
+    "asyncpg>=0.30,<0.31",
+    "alembic>=1.14,<1.15",
+    "redis>=5.2,<7.0",
+    # ── market data + features ──
+    "databento>=0.43,<1.0",
+    "pandas>=2.2,<3.0",
+    "pandas-market-calendars>=4.4,<6.0",
+    # ── vault + observability ──
+    "boto3>=1.35,<2.0",
+    "cryptography>=43.0,<45.0",
+    "sentry-sdk>=2.18,<3.0",
 ]
 
 [project.optional-dependencies]
@@ -25,17 +37,23 @@ dev = [
     "mypy>=1.13,<2.0",
     "pytest>=8.3,<9.0",
     "pytest-cov>=6.0,<7.0",
+    "pytest-asyncio>=0.24,<1.0",
+    "moto[kms]>=5.0,<6.0",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["quantflo"]
 
 [tool.ruff]
-line-length = 100
+line-length = 110
 target-version = "py311"
+extend-exclude = ["alembic/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["quantflo"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -43,6 +61,18 @@ strict = true
 plugins = ["pydantic.mypy"]
 files = ["quantflo", "scripts", "tests"]
 
+# Third-party libraries without (complete) type stubs.
+[[tool.mypy.overrides]]
+module = [
+    "databento.*",
+    "pandas_market_calendars.*",
+    "boto3.*",
+    "botocore.*",
+    "moto.*",
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+asyncio_mode = "auto"
