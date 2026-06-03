@@ -17,9 +17,15 @@
   written spec; never copy code).
 - **Target phase:** P1 Data & Vault · P2 Research & Strategy · P3 Testing & Validation ·
   P4 Risk & Execution · P5 ModelOps & Monitoring · P6 Governance & Go-Live.
-- **Probe:** `PASS (executed)` · `CI probe defined → probe.yml @ <SHA>` (manual
-  dispatch, pending run) — see each `*_analysis.md` and §Feasibility-probe status.
-  No ELITE feature rests on inspection alone.
+- **Probe:** **`✅ source PASS @ <SHA>`** = the feature's own upstream test ran GREEN at
+  the pinned SHA via `.github/workflows/probe.yml` (CI run **26902471654**, 4/4 jobs
+  green: freqtrade@`9eededca`, hummingbot@`91ff6bfa`, lumibot@`ed4886b1`,
+  openalgo@`b9154f66`) — or, for quanttrader/pyalgotrader, a local executed probe.
+  `⚠ best-effort` = ran in a non-gating continue-on-error step. Features with **no** such
+  marker verify at their **port phase** (design-references, need broker/data creds, or
+  not creds-free-unit-testable) — no ELITE feature rests on inspection alone. For
+  COPYLEFT/AGPL sources a green source-probe only validates that the behavior is worth
+  clean-room reimplementing; the clean-room reimpl is still the porting verification.
 
 ## Copyleft summary (requirement 2.4)
 
@@ -40,71 +46,71 @@
 
 | Feature | Elite | Clean-room | Target module | Phase | Verification method (real-data test) |
 |---------|-------|-----------|---------------|-------|--------------------------------------|
-| Brokerage abstraction (backtest↔live portability) | ELITE | No | `execution/` | P4 | Run a QUANTFLO strategy unchanged against sim broker + Tradovate-sim via one interface; assert identical code path; **base probe PASS (executed)**. |
-| Backtest simulated brokerage (fills, commission, STOP/trailing) | ELITE | No | testers (Team 3) | P3 | Backtest ES 2023 OOS bars; assert fills + commission match a hand-computed buy&hold equity curve. |
-| Event-driven backtest engine + no-look-ahead DataBoard | ELITE | No | testers (Team 3) | P3 | Feed a look-ahead-trap dataset; assert engine never reads future bars (bias test green). |
-| Config-driven RiskManager pre-trade gate | ELITE | No | `teams/risk_compliance` | P4 | Submit orders breaching single_trade/total_loss limits; assert rejection + lock. |
-| Futures-multiplier Position/PnL | ELITE | No | `core` accounting | P3 | 2-contract ES round-trip; assert PnL = (exit−entry)×ticks×$12.50×qty. |
-| CME instrument metadata seed | ELITE (data) | No | `core/instruments` | **P0 done** | Unit test asserts ES=50/NQ=20/MES=5/MNQ=2 — **DONE** (`tests/test_instruments.py`). |
-| IB native brokerage integration | ELITE-conditional | No | `execution/` | P4 | (If IB chosen) place bracket order on IB paper account; confirm fill. |
+| Brokerage abstraction (backtest↔live portability) | ELITE | No | `execution/` | P4 | **✅ source PASS** (local `pytest tests/test_strats.py`). Port: run a QUANTFLO strategy unchanged against sim broker + Tradovate-sim via one interface; assert identical code path. |
+| Backtest simulated brokerage (fills, commission, STOP/trailing) | ELITE | No | testers (Team 3) | P3 | **✅ source PASS** (local `tests/test_strats.py`). Port: backtest ES 2023 OOS; assert fills + commission match a hand-computed buy&hold curve. |
+| Event-driven backtest engine + no-look-ahead DataBoard | ELITE | No | testers (Team 3) | P3 | **✅ source PASS** (local `tests/test_strats.py`). Port: feed a look-ahead-trap dataset; assert engine never reads future bars. |
+| Config-driven RiskManager pre-trade gate | ELITE | No | `teams/risk_compliance` | P4 | Port: submit orders breaching single_trade/total_loss limits; assert rejection + lock. (Local backtest used PassThroughRiskManager — limits verify at port.) |
+| Futures-multiplier Position/PnL | ELITE | No | `core` accounting | P3 | **✅ source PASS** (local `tests/test_strats.py`). Port: 2-contract ES round-trip; assert PnL = (exit−entry)×ticks×$12.50×qty. |
+| CME instrument metadata seed | ELITE (data) | No | `core/instruments` | **P0 done** | **✅ DONE** — unit test asserts ES=50/NQ=20/MES=5/MNQ=2 (`tests/test_instruments.py`). |
+| IB native brokerage integration | ELITE-conditional | No | `execution/` | P4 | Port (if IB chosen): place bracket order on IB paper account; confirm fill. |
 
 ## pyalgotrader — MIT (clean-room: No)
 
 | Feature | Elite | Clean-room | Target module | Phase | Verification method |
 |---------|-------|-----------|---------------|-------|---------------------|
-| Event-driven core (`EventEngine` + `MainEngine` plugins) | ELITE | No | `core` + `orchestration` | P1 | Dispatch N events to M handlers under load; assert ordering + no loss; **import probe PASS (executed)**. |
-| Normalized object model + OMS cache | ELITE | No | `execution/` | P4 | Construct Order/Trade/Position; assert `vt_*` ids + active-order view correct. |
-| Gateway adapter + `LocalOrderManager` | ELITE | No | `execution/` | P4 | Simulate out-of-order broker push; assert local↔sys id reconciliation. |
-| Execution-algo framework (TWAP/Iceberg/Sniper) | ELITE | No | `execution/` | P4 | Run TWAP over a sim tick stream; assert child orders slice parent qty on schedule. |
-| Local stop-order simulation | ELITE | No | `execution/` | P4 | Place local stop; cross it in sim; assert exactly one real order fired. |
-| `BarGenerator` + `ArrayManager` | ELITE (pattern) | No | `teams/data_engineering` | P1 | Feed ticks; assert 1-min bars aggregate correctly + ATR matches a reference. |
+| Event-driven core (`EventEngine` + `MainEngine` plugins) | ELITE | No | `core` + `orchestration` | P1 | **✅ source PASS** (local `CoreImportTest`, 2 passed). Port: dispatch N events to M handlers under load; assert ordering + no loss. |
+| Normalized object model + OMS cache | ELITE | No | `execution/` | P4 | **✅ source PASS** (local `CoreImportTest` MainEngine/OMS). Port: construct Order/Trade/Position; assert `vt_*` ids + active-order view. |
+| Gateway adapter + `LocalOrderManager` | ELITE | No | `execution/` | P4 | Port: simulate out-of-order broker push; assert local↔sys id reconciliation. |
+| Execution-algo framework (TWAP/Iceberg/Sniper) | ELITE | No | `execution/` | P4 | Port: run TWAP over a sim tick stream; assert child orders slice parent qty on schedule. |
+| Local stop-order simulation | ELITE | No | `execution/` | P4 | Port: place local stop; cross it in sim; assert exactly one real order fired. |
+| `BarGenerator` + `ArrayManager` | ELITE (pattern) | No | `teams/data_engineering` | P1 | Port: feed ticks; assert 1-min bars aggregate + ATR matches a reference. |
 
 ## hummingbot — Apache-2.0 (clean-room: Partial — venue layer)
 
 | Feature | Elite | Clean-room | Target module | Phase | Verification method |
 |---------|-------|-----------|---------------|-------|---------------------|
-| Controller/Executor/Orchestrator split | ELITE | No (pure-py) | `strategies/` + `execution/` | P2/P4 | Controller emits CreateExecutorAction; assert orchestrator instantiates executor + aggregates PnL (mirror `test_executor_orchestrator.py`). |
-| Triple-barrier risk envelope (TP/SL/time/trailing) | ELITE | No (pure-py) | `execution/` | P4 | Open sim ES position; assert SL/TP/time-limit/trailing exits at correct prices. |
-| Unified backtest/live from one strategy def | ELITE | No (pure-py) | testers (Team 3) | P3 | Replay an ES candle fixture through one config; assert Sharpe/drawdown == live-path action sequence. |
-| Connector + `ClientOrderTracker` + `InFlightOrder` SM | ELITE (pattern) | Partial | `execution/` broker driver | P4 | Feed OrderUpdate/TradeUpdate incl lost-order; assert 11-state transitions + reconciliation. |
-| Paper-trade mode (fills vs live book) | ELITE (pattern) | Partial | testers/`execution` | P3/P4 | Run a strategy unmodified vs sim broker; assert same API surface as live. |
-| Executor PnL/`PerformanceReport` + `PositionHold` netting | ELITE | No (pure-py) | `core` accounting | P3/P4 | Net buys/sells; assert breakeven + realized/unrealized PnL. |
-| MQTT remote control + telemetry plane | ELITE (pattern) | No (pure-py) | monitoring/governance | P5/P6 | Publish kill command over bus; assert trading loop halts + PerformanceReport telemetry emitted. |
+| Controller/Executor/Orchestrator split | ELITE | No (pure-py) | `strategies/` + `execution/` | P2/P4 | **✅ source PASS @ `91ff6bfa`** (run 26902471654: module import + `test_executor_orchestrator.py`). Port: controller emits CreateExecutorAction; assert orchestrator instantiates executor + aggregates PnL. |
+| Triple-barrier risk envelope (TP/SL/time/trailing) | ELITE | No (pure-py) | `execution/` | P4 | **✅ source PASS @ `91ff6bfa`** (run 26902471654: `test_position_executor.py`). Port: open sim ES position; assert SL/TP/time-limit/trailing exits at correct prices. |
+| Executor PnL/`PerformanceReport` + `PositionHold` netting | ELITE | No (pure-py) | `core` accounting | P3/P4 | **✅ source PASS @ `91ff6bfa`** (run 26902471654: exercised in `test_executor_orchestrator.py`). Port: net buys/sells; assert breakeven + realized/unrealized PnL. |
+| Unified backtest/live from one strategy def | ELITE | No (pure-py) | testers (Team 3) | P3 | Port: replay an ES candle fixture through one config; assert Sharpe/drawdown == live-path action sequence. (No bundled OHLCV → not in source-probe.) |
+| Connector + `ClientOrderTracker` + `InFlightOrder` SM | ELITE (pattern) | Partial | `execution/` broker driver | P4 | Port: feed OrderUpdate/TradeUpdate incl lost-order; assert 11-state transitions + reconciliation. |
+| Paper-trade mode (fills vs live book) | ELITE (pattern) | Partial | testers/`execution` | P3/P4 | Port: run a strategy unmodified vs sim broker; assert same API surface as live. |
+| MQTT remote control + telemetry plane | ELITE (pattern) | No (pure-py) | monitoring/governance | P5/P6 | Port: publish kill command over bus; assert trading loop halts + PerformanceReport telemetry emitted. (Needs a broker → not in source-probe.) |
 
 ## freqtrade — GPL-3.0 (clean-room: MANDATORY / COPYLEFT)
 
 | Feature | Elite | Clean-room | Target module | Phase | Verification method |
 |---------|-------|-----------|---------------|-------|---------------------|
-| Lookahead-bias detector | ELITE | MANDATORY | testers (Team 3) | P3 | Clean-room reimpl; run on a known-biased strategy; assert it flags the leak. |
-| Recursive-formula bias detector | ELITE | MANDATORY | testers (Team 3) | P3 | Reimpl; vary startup candles 199→1999; assert unstable EMA/RSI flagged. |
-| Performance-metrics library | ELITE | MANDATORY | testers/monitoring | P3/P5 | Reimpl Sharpe/Sortino/Calmar; assert within 1e-6 of `empyrical` (a clean reference, NOT freqtrade output). |
-| Protections framework (circuit-breakers) | ELITE | MANDATORY | `teams/risk_compliance` | P4 | Reimpl stoploss-guard; trigger N stoplosses in lookback; assert global lock-until set. |
-| Hyperopt loss interface + objective catalog | ELITE (interface) | MANDATORY | strategy-creators/modelops | P2/P5 | Reimpl interface + Sharpe loss; assert smaller-is-better on two synthetic equity curves. |
-| FreqAI continual-learning architecture | ELITE (arch) | MANDATORY | `teams/modelops` | P5 | Reimpl retrain scheduler + drift gate; on a rolling window assert retrain triggers at boundary + outliers rejected. |
-| Backtest fill-realism (ideas only) | ELITE (ideas) | MANDATORY | testers (Team 3) | P3 | Reimpl trailing-within-candle; assert exit price on a crafted candle == expected. |
-| Producer/Consumer signal pub/sub | ELITE (pattern) | MANDATORY | data-eng/research | P1/P2 | Reimpl pub/sub; publish a signal; assert all subscribers receive it. |
+| Lookahead-bias detector | ELITE | MANDATORY | testers (Team 3) | P3 | **✅ source PASS @ `9eededca`** (run 26902471654: `tests/optimize/test_lookahead_analysis.py`). Clean-room reimpl at port: run on a known-biased strategy; assert it flags the leak. |
+| Recursive-formula bias detector | ELITE | MANDATORY | testers (Team 3) | P3 | **✅ source PASS @ `9eededca`** (run 26902471654: `tests/optimize/test_recursive_analysis.py`). Clean-room reimpl at port: vary startup candles 199→1999; assert unstable EMA/RSI flagged. |
+| Performance-metrics library | ELITE | MANDATORY | testers/monitoring | P3/P5 | **✅ source PASS @ `9eededca`** (run 26902471654: `tests/data/test_metrics.py`). Clean-room reimpl at port: assert Sharpe/Sortino/Calmar within 1e-6 of `empyrical` (NOT freqtrade output). |
+| Protections framework (circuit-breakers) | ELITE | MANDATORY | `teams/risk_compliance` | P4 | **✅ source PASS @ `9eededca`** (run 26902471654: `tests/plugins/test_protections.py`). Clean-room reimpl at port: trigger N stoplosses in lookback; assert global lock-until set. |
+| Hyperopt loss interface + objective catalog | ELITE (interface) | MANDATORY | strategy-creators/modelops | P2/P5 | **✅ source PASS @ `9eededca`** (run 26902471654: `tests/optimize/test_hyperoptloss.py`). Clean-room reimpl at port: assert smaller-is-better on two synthetic equity curves. |
+| FreqAI continual-learning architecture | ELITE (arch) | MANDATORY | `teams/modelops` | P5 | **⚠ best-effort** (run 26902471654 extended step, non-gating). Clean-room reimpl at port: retrain scheduler + drift gate; assert retrain triggers at boundary + outliers rejected. |
+| Backtest fill-realism (ideas only) | ELITE (ideas) | MANDATORY | testers (Team 3) | P3 | Clean-room reimpl at port: trailing-within-candle; assert exit price on a crafted candle == expected. (Not in source-probe.) |
+| Producer/Consumer signal pub/sub | ELITE (pattern) | MANDATORY | data-eng/research | P1/P2 | Clean-room reimpl at port: publish a signal; assert all subscribers receive it. (Not in source-probe.) |
 
 ## lumibot — GPL-3.0 (clean-room: MANDATORY / COPYLEFT)
 
 | Feature | Elite | Clean-room | Target module | Phase | Verification method |
 |---------|-------|-----------|---------------|-------|---------------------|
-| Continuous-futures roll engine | ELITE | MANDATORY | `core/instruments` + data-eng | P1 | Reimpl roll rules; assert active ES contract on a date == 8 bdays before 3rd-Friday, all 6 symbols (behavior cross-check vs `tests/test_futures_roll.py`). |
-| Futures margin/PnL backtest engine | ELITE | MANDATORY | testers (Team 3) | P3 | Reimpl margin table + multiplier MtM; assert MES margin=1300 + FIFO lot ledger keyed on expiry. |
-| Strategy lifecycle base + executor | ELITE (design) | MANDATORY | strategies/execution | P2/P4 | Reimpl hook set; assert before_market_opens→on_trading_iteration→after_market_closes order on a sim session. |
-| Broker ABC backtest↔live parity | ELITE (design) | MANDATORY | `execution/` | P4 | One abstraction; assert same strategy runs vs sim + IB-paper with no code change. |
-| DataBento futures-data integration | ELITE (vendor ref) | MANDATORY | `teams/data_engineering` | P1 | Resolve CONT_FUTURE ES→front-month on a date; stitch across a roll; assert continuous series. |
+| Continuous-futures roll engine | ELITE | MANDATORY | `core/instruments` + data-eng | P1 | **✅ source PASS @ `ed4886b1`** (run 26902471654: `tests/test_futures_roll.py`). Clean-room reimpl at port: assert active ES contract == 8 bdays before 3rd-Friday, all 6 symbols. |
+| DataBento futures-data integration | ELITE (vendor ref) | MANDATORY | `teams/data_engineering` | P1 | **✅ source PASS @ `ed4886b1`** (run 26902471654: `tests/test_continuous_futures_resolution.py` — resolution/front-month logic). Clean-room reimpl at port: resolve CONT_FUTURE ES→front-month + stitch across a roll. |
+| Futures margin/PnL backtest engine | ELITE | MANDATORY | testers (Team 3) | P3 | **⚠ best-effort** (run 26902471654 MES-margin lookup step). Clean-room reimpl at port: margin table + multiplier MtM; assert MES margin=1300 + FIFO lot ledger keyed on expiry. |
+| Strategy lifecycle base + executor | ELITE (design) | MANDATORY | strategies/execution | P2/P4 | Clean-room reimpl at port: assert before_market_opens→on_trading_iteration→after_market_closes order on a sim session. (Design-ref; not in source-probe.) |
+| Broker ABC backtest↔live parity | ELITE (design) | MANDATORY | `execution/` | P4 | Clean-room reimpl at port: one abstraction; assert same strategy runs vs sim + IB-paper with no code change. (Needs creds; not in source-probe.) |
 
 ## openalgo — AGPL-3.0 (clean-room: MANDATORY / NETWORK-COPYLEFT)
 
 | Feature | Elite | Clean-room | Target module | Phase | Verification method |
 |---------|-------|-----------|---------------|-------|---------------------|
-| Broker plugin/capability dispatch | ELITE | MANDATORY | `execution/` | P4 | Reimpl plugin loader; register a Tradovate adapter via capability manifest; assert dynamic dispatch to place_order. |
-| SmartOrder target-position delta | ELITE | MANDATORY | `execution/` | P4 | Reimpl from the 12-case truth table; assert flat→long, long→short flip, and no-op deltas (spec from `test_smartorder_logic.py`, not code). |
-| Sandbox paper-trade mode-switch | ELITE | MANDATORY | testers/governance | P3/P4 | Reimpl analyze-mode flag; assert order routes to sim engine with identical request/response shape. |
-| WS market-data normalization + ZMQ fanout | ELITE | MANDATORY | `data/` + data-eng | P1 | Reimpl normalize→bus→fanout; assert one slow client doesn't block the feed; LTP/Quote/Depth modes. |
-| Token-at-rest encryption + key hashing | ELITE (pattern) | MANDATORY | `core/config` vault / risk | P1 | Reimpl Argon2 key-hash + Fernet token encrypt; assert plaintext never persisted; boot fails on weak pepper. |
-| Stale-token auto-recovery | ELITE (pattern) | MANDATORY | `execution/` | P4 | Simulate 401; assert fresh token fetched + single retry + caches invalidated. |
-| In-process event bus | ELITE (pattern) | MANDATORY | `orchestration`/`state_bus` | P1 | Publish OrderPlaced event; assert monitoring + governance subscribers fire without blocking trade path. |
+| SmartOrder target-position delta | ELITE | MANDATORY | `execution/` | P4 | **✅ source PASS @ `b9154f66`** (run 26902471654: `test/test_smartorder_logic.py`, the 12-case truth table — REQUIRED/gating step). Clean-room reimpl at port: assert flat→long, long→short flip, no-op deltas (spec, not code). |
+| Broker plugin/capability dispatch | ELITE | MANDATORY | `execution/` | P4 | Clean-room reimpl at port: register a Tradovate adapter via capability manifest; assert dynamic dispatch to place_order. (Not in source-probe.) |
+| Sandbox paper-trade mode-switch | ELITE | MANDATORY | testers/governance | P3/P4 | **⚠ best-effort / known-shadow** — `test/sandbox/` is an upstream-repo package-name collision (its own `sandbox/__init__.py` shadows the root `sandbox/`); it ran non-gating. NOT part of the extracted SmartOrder feature. Clean-room reimpl at port: assert analyze-mode flag routes orders to sim engine with identical request/response shape. |
+| WS market-data normalization + ZMQ fanout | ELITE | MANDATORY | `data/` + data-eng | P1 | Clean-room reimpl at port: normalize→bus→fanout; assert one slow client doesn't block the feed; LTP/Quote/Depth modes. (Needs a feed; not in source-probe.) |
+| Token-at-rest encryption + key hashing | ELITE (pattern) | MANDATORY | `core/config` vault / risk | P1 | Clean-room reimpl at port: Argon2 key-hash + Fernet token encrypt; assert plaintext never persisted; boot fails on weak pepper. |
+| Stale-token auto-recovery | ELITE (pattern) | MANDATORY | `execution/` | P4 | Clean-room reimpl at port: simulate 401; assert fresh token fetched + single retry + caches invalidated. |
+| In-process event bus | ELITE (pattern) | MANDATORY | `orchestration`/`state_bus` | P1 | Clean-room reimpl at port: publish OrderPlaced event; assert monitoring + governance subscribers fire without blocking trade path. |
 
 ## ruflo — MIT (backbone: leverage directly, not extract)
 
@@ -125,26 +131,29 @@
 
 ---
 
-## Feasibility-probe status (requirement 2.6)
+## Feasibility-probe status (requirement 2.6) — 4/4 CI jobs GREEN + 2 local
 
-| Source | Probe status | Evidence |
-|--------|--------------|----------|
-| quanttrader | **PASS (executed)** | `pytest tests/test_strats.py` → 1 passed (bundled `TEST.csv`, no creds). |
-| pyalgotrader | **PASS (executed, elite features)** | `CoreImportTest` → 2 passed (event engine + MainEngine/OMS); only `test_import_ui` failed (PyQt5 = rejected feature). |
-| ruflo | **PARTIAL (runtime present)** | Pinned `ruflo@3.10.31` installs + CLI boots (loads ONNX model); swarm unit suites deferred (need `tsc` build). |
-| freqtrade | **CI probe defined** → `probe.yml` job `freqtrade-probe` @ `9eededca` | Runs `pytest` on metrics + lookahead/recursive bias detectors + protections + hyperopt-loss (bundled `tests/testdata`, no creds); FreqAI datakitchen as best-effort extended step. Pending manual dispatch. |
-| hummingbot | **CI probe defined** → `probe.yml` job `hummingbot-probe` @ `91ff6bfa` | Conda build + imports V2 controller/executor/orchestrator + runs `test_executor_orchestrator.py`, `test_position_executor.py`, `test_rate_oracle.py` (mock-based, no creds). Pending manual dispatch. |
-| lumibot | **CI probe defined** → `probe.yml` job `lumibot-probe` @ `ed4886b1` | Runs `tests/test_futures_roll.py` + `tests/test_continuous_futures_resolution.py` (creds-free roll engine); MES margin lookup as best-effort extended step. Pending manual dispatch. |
-| openalgo | **CI probe defined** → `probe.yml` job `openalgo-probe` @ `b9154f66` | `uv sync` + runs `test/test_smartorder_logic.py` (12-case truth table) + `test/sandbox/`; command-center app-load as best-effort extended step. Pending manual dispatch. |
+CI: `.github/workflows/probe.yml`, **run 26902471654**, all four jobs green.
+
+| Source | Probe status | Evidence (what actually ran green) |
+|--------|--------------|------------------------------------|
+| quanttrader | **✅ PASS (local)** | `pytest tests/test_strats.py` → 1 passed (bundled `TEST.csv`, no creds). |
+| pyalgotrader | **✅ PASS (local, elite features)** | `CoreImportTest` → 2 passed (event engine + MainEngine/OMS); only `test_import_ui` failed (PyQt5 = rejected feature). |
+| ruflo | **PARTIAL (runtime present)** | Pinned `ruflo@3.10.31` installs + CLI boots; swarm unit suites deferred (need `tsc` build). Backbone, not an extraction target. |
+| freqtrade | **✅ PASS @ `9eededca`** (run 26902471654) | `pytest` GREEN on metrics + lookahead + recursive bias detectors + protections + hyperopt-loss (5 ELITE features). FreqAI datakitchen = best-effort (non-gating). |
+| hummingbot | **✅ PASS @ `91ff6bfa`** (run 26902471654) | V2 controller/executor/orchestrator imports OK; `test_executor_orchestrator.py` + `test_position_executor.py` (+ `test_rate_oracle.py`) GREEN → controller/executor split, triple-barrier, PnL-netting (3 ELITE). |
+| lumibot | **✅ PASS @ `ed4886b1`** (run 26902471654) | `test_futures_roll.py` + `test_continuous_futures_resolution.py` GREEN → roll engine + DataBento resolution (2 ELITE). MES-margin lookup = best-effort. |
+| openalgo | **✅ PASS @ `b9154f66`** (run 26902471654) | REQUIRED `test/test_smartorder_logic.py` GREEN → SmartOrder delta (1 ELITE). `test/sandbox/` = best-effort/known-shadow (upstream `test/sandbox/` package shadows root `sandbox/`), not part of the extracted feature. |
 | neural-trader plugin | N/A (rejected) | No standalone runnable feature; engine rejected as dependency. |
 
-**Status (requirement 4 — no feature ELITE on inspection alone):** 2 of 6 substantial
-repos have **executed** probes (PASS). The other 4 each now map to a concrete
-`.github/workflows/probe.yml` job at a **pinned SHA** (table above) — the probe clones
-the upstream repo into an isolated Linux runner, runs its OWN credentials-free test
-suite for the ELITE feature(s), and uploads PASS/FAIL logs as artifacts. Copyleft-safe:
-nothing from those repos is copied into `quantflo/`. These probes are **defined and
-pending the manual `workflow_dispatch` run** — they are NOT yet claimed as PASS. After
-the run: promote each feature's `verification_method` to "PASS @ SHA", or demote the
-feature from ELITE if its probe fails. ruflo's swarm unit suites remain a `tsc`-build
-follow-up (backbone, not an extraction target).
+**Status (requirement 4 — no feature ELITE on inspection alone):** every substantial
+source now has an **executed** probe — quanttrader + pyalgotrader locally, and
+freqtrade/hummingbot/lumibot/openalgo via CI **run 26902471654** (4/4 jobs green). The
+**flagship, creds-free-testable ELITE features carry `✅ source PASS @ <SHA>`**. The
+remaining ELITE rows (design-references like lumibot's lifecycle/broker-ABC, hummingbot's
+connector/paper-trade/MQTT, openalgo's plugin-dispatch/WS/token/event-bus; freqtrade's
+backtest-realism/pub-sub; FreqAI) are **not** creds-free-unit-testable in isolation —
+their verification is a **port-phase real-data test** by nature, recorded per-row above.
+For all COPYLEFT/AGPL sources the green source-probe only confirms the behavior is worth
+**clean-room reimplementing**; the clean-room reimpl remains the porting verification.
+Probe workspaces stayed isolated in `$RUNNER_TEMP`; **nothing was copied into `quantflo/`**.
